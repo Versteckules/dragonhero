@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dragon Hero</title>
+    
+    <style>
+        html,
+        body {
+          height: 100%;
+          margin: 0;
+          overflow: hidden; 
+        }
+
+        body {
+          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+          cursor: pointer;
+          background-color: #1a1a1a; 
+          user-select: none; 
+        }
+
+        .container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100%;
+        }
+
+
+
+        /* START: Musik Button */
+        #music-toggle {
+          position: absolute;
+          top: 30px;
+          left: 30px;
+          background: rgba(255, 255, 255, 0.2);
+          color: white;
+          border: 1px solid rgba(255, 255, 255, 0.5);
+          padding: 8px 15px;
+          border-radius: 20px;
+          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+          font-size: 1em;
+          font-weight: bold;
+          cursor: pointer;
+          z-index: 30;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+          transition: all 0.3s ease;
+        }
+        #music-toggle:hover {
+          background: rgba(255, 255, 255, 0.4);
+        }
+        /* ENDE: Musik Button */
+
+        /* START: Startmenü */
+        #start-menu {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: #1a1a1a; 
+          z-index: 1000;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+        }
+        #start-menu img {
+          width: 180px; 
+          height: auto; 
+          max-height: 250px; 
+          border-radius: 15px;
+          object-fit: contain; 
+          margin-bottom: 25px;
+          background-color: #2ecc71; 
+          border: 3px solid #2ecc71;
+          box-shadow: 0 0 30px rgba(46, 204, 113, 0.5);
+          padding: 5px; 
+        }
+        #start-menu h1 {
+          color: #2ecc71;
+          font-size: 3em;
+          margin: 0;
+          text-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
+        }
+        #start-menu p {
+          color: #95a5a6;
+          font-style: italic;
+          margin-top: 5px;
+          font-size: 1.2em;
+        }
+        #btn-start-game {
+          margin-top: 40px;
+          background: #e74c3c;
+          color: white;
+          border: none;
+          padding: 15px 40px;
+          font-size: 1.2em;
+          font-weight: bold;
+          border-radius: 25px;
+          cursor: pointer;
+          box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+          text-transform: uppercase;
+        }
+        /* ENDE: Startmenü */
+
+        #score {
+          position: absolute;
+          top: 30px;
+          right: 30px;
+          font-size: 2em;
+          font-weight: 900;
+          z-index: 10;
+        }
+
+        #introduction {
+          width: 250px;
+          position: absolute;
+          font-weight: 600;
+          font-size: 1em;
+          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+          text-align: center;
+          transition: opacity 2s;
+          z-index: 10;
+          background: rgba(255,255,255,0.8);
+          padding: 15px;
+          border-radius: 10px;
+        }
+
+        #restart {
+          width: 120px;
+          height: 120px;
+          position: absolute;
+          border-radius: 50%;
+          color: white;
+          background-color: red;
+          border: none;
+          font-weight: 700;
+          font-size: 1.2em;
+          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+          display: none;
+          cursor: pointer;
+          z-index: 20;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        #perfect {
+          position: absolute;
+          opacity: 0;
+          transition: opacity 2s;
+          font-weight: bold;
+          color: #e74c3c;
+          font-size: 1.5em;
+          z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Versteckter Audio-Player für die Hintergrundmusik -->
+    <audio id="bg-music" src="music.mp3" loop preload="auto"></audio>
+
+    <!-- Sichtbarer Button zum Ein/Ausschalten der Musik -->
+    <button id="music-toggle">🎵 Musik: ON</button>
+
+    <!-- START: Startmenü Overlay -->
+    <div id="start-menu">
+        <img src="Avatar.jpg" alt="Avatar">
+        <h1>Dragon Hero</h1>
+        <p>made by versteckules</p>
+        <button id="btn-start-game">Spiel Starten</button>
+    </div>
+
+
+
+    <div class="container">
+      <div id="score">0</div>
+      <canvas id="game"></canvas>
+      <div id="introduction">
+          Halte gedrückt, um Sprungkraft zu laden. Loslassen = Sprung.<br><br>
+          <span style="color: #e74c3c; font-weight: bold;">ZIEL: 20 PUNKTE</span>
+      </div>
+      <div id="perfect">PERFEKT! +2</div>
+      <button id="restart">NEUSTART</button>
+    </div>
+
+    <!-- START: Vollbild Geocaching-Sieger-Popup -->
+    <div id="victory-popup" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(20, 25, 30, 0.95); z-index: 2147483647; flex-direction: column; justify-content: center; align-items: center; text-align: center; font-family: 'Segoe UI', Tahoma, sans-serif;">
+        <div style="background: rgba(0,0,0,0.6); padding: 40px 20px; border-radius: 20px; border: 2px solid #2ecc71; box-shadow: 0 0 40px rgba(46, 204, 113, 0.4); width: 85%; max-width: 400px;">
+            <h1 style="color: #2ecc71; font-size: 32px; font-weight: 900; margin: 0 0 15px 0; text-shadow: 0 0 15px #2ecc71; letter-spacing: 1px;">SYSTEM GEKNACKT</h1>
+            <p style="color: #ecf0f1; font-size: 18px; margin-bottom: 25px;">Glückwunsch! Hier sind die Final-Koordinaten:</p>
+            <div style="background: #111; padding: 15px; border-radius: 10px; border: 1px solid #e74c3c; box-shadow: inset 0 0 10px rgba(231, 76, 60, 0.3);">
+                <span id="secret-coords" style="color: #e74c3c; font-family: monospace; font-size: 22px; font-weight: bold; letter-spacing: 1px;"></span>
+            </div>
+            <p style="color: #95a5a6; font-size: 14px; margin-top: 20px; margin-bottom: 30px;">(Am besten sofort einen Screenshot machen!)</p>
+        </div>
+    </div>
+    <!-- ENDE: Sieger-Popup -->
+
+
+    <script>
+        // Extend the base functionality of JavaScript
+        Array.prototype.last = function () {
+          return this[this.length - 1];
+        };
+
+        Math.sinus = function (degree) {
+          return Math.sin((degree / 180) * Math.PI);
+        };
+
+        // Game data
+        let phase = "waiting"; 
+        let lastTimestamp; 
+
+        let heroX; 
+        let heroY; 
+        let sceneOffset; 
+
+        let platforms = [];
+        let currentPlatformIndex = 0; // Index des Stegs, auf dem der Drache gestartet ist / steht
+
+        let charge = 0; // 0..1 Ladezustand für den Sprung
+        let vx = 0; // Horizontale Geschwindigkeit (px/ms)
+        let vy = 0; // Vertikale Geschwindigkeit (px/ms)
+        let jumpCount = 0; // Zähler der ausgeführten Sprünge (0..10+)
+        let fallRotation = 0; // Rotationswinkel beim Absturz (im Uhrzeigersinn)
+        let particles = []; // Staubpartikel bei der Landung
+        let score = 0;
+        let cacheKnacked = false;
+        let isGameReady = false; 
+        let lastRestartTime = 0; 
+
+        // Musik Variablen
+        const bgMusic = document.getElementById("bg-music");
+        const musicToggleBtn = document.getElementById("music-toggle");
+        let isMusicPlaying = true; 
+
+        // Wasserzeichen-Bild für den Hintergrund
+        const watermarkImg = new Image();
+        watermarkImg.src = "Avatar.jpg";
+        let watermarkCanvas = null; 
+
+        // Wolken für die Abendstimmung
+        const clouds = [
+          { x: 50, y: 70, w: 90, speed: 12 },
+          { x: 220, y: 120, w: 130, speed: 8 },
+          { x: 420, y: 60, w: 110, speed: 10 },
+          { x: 650, y: 100, w: 80, speed: 14 }
+        ]; 
+
+        // Configuration
+        const canvasWidth = 375;
+        const canvasHeight = 375;
+        const platformHeight = 100;
+        const heroDistanceFromEdge = 10; 
+        const paddingX = 100; 
+        const perfectAreaSize = 10;
+
+        // Sprungphysik-Konstanten
+        // Mit Winkel 55°, vMin=0.45 und vMax=1.12 springt der Drache bei charge=1 ca. 420px weit
+        const JUMP_ANGLE_RAD = (55 * Math.PI) / 180;
+        const V_MIN = 0.45;
+        const V_MAX = 1.12;
+        const GRAVITY = 0.0028; // px/ms^2
+        const transitioningSpeed = 0.6; // px/ms für Kamerabewegung
+
+        const canvas = document.getElementById("game");
+        canvas.width = window.innerWidth; 
+        canvas.height = window.innerHeight;
+
+        const ctx = canvas.getContext("2d");
+
+        const introductionElement = document.getElementById("introduction");
+        const perfectElement = document.getElementById("perfect");
+        const restartButton = document.getElementById("restart");
+        const scoreElement = document.getElementById("score");
+
+        // Musik Toggle Logik (Abgesichert gegen Ghost Clicks)
+        function toggleMusic(e) {
+            e.preventDefault();
+            e.stopPropagation(); 
+            
+            if (isMusicPlaying) {
+                bgMusic.pause();
+                isMusicPlaying = false;
+                musicToggleBtn.innerText = "🔇 Musik: OFF";
+                musicToggleBtn.style.opacity = "0.6";
+            } else {
+                let playPromise = bgMusic.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => console.log("Musik konnte nicht gestartet werden.", error));
+                }
+                isMusicPlaying = true;
+                musicToggleBtn.innerText = "🎵 Musik: ON";
+                musicToggleBtn.style.opacity = "1";
+            }
+        }
+        
+        musicToggleBtn.addEventListener("click", toggleMusic);
+        musicToggleBtn.addEventListener("touchstart", toggleMusic);
+
+        // UI-Steuerung für das Startmenü & Musikstart
+        const startMenuBtn = document.getElementById("btn-start-game");
+        const startMenu = document.getElementById("start-menu");
+
+        // WICHTIG FÜR HANDYS: Nur noch das echte "click" Event nutzen, um die Audio-Sperre zu knacken!
+        startMenuBtn.addEventListener("click", function(e) {
+            e.stopPropagation();
+            startMenu.style.display = "none";
+            isGameReady = true;
+            
+            if (isMusicPlaying) {
+                let playPromise = bgMusic.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log("Handy blockiert Autoplay - setze auf OFF", error);
+                        // Fallback, falls der Browser trotzdem meckert
+                        isMusicPlaying = false;
+                        musicToggleBtn.innerText = "🔇 Musik: OFF";
+                        musicToggleBtn.style.opacity = "0.6";
+                    });
+                }
+            }
+        });
+
+        // Initialize layout
+        resetGame();
+
+        function resetGame() {
+          phase = "waiting";
+          lastTimestamp = undefined;
+          sceneOffset = 0;
+          score = 0;
+          charge = 0;
+          vx = 0;
+          vy = 0;
+          jumpCount = 0;
+          fallRotation = 0;
+          particles = [];
+          currentPlatformIndex = 0;
+          
+          lastRestartTime = Date.now();
+
+          introductionElement.style.opacity = 1;
+          perfectElement.style.opacity = 0;
+          restartButton.style.display = "none";
+          scoreElement.innerText = score;
+
+          platforms = [{ x: 50, w: 50 }];
+          for (let i = 0; i < 5; i++) {
+            generatePlatform();
+          }
+
+          heroX = platforms[0].x + platforms[0].w - heroDistanceFromEdge;
+          heroY = 0;
+
+          draw();
+        }
+
+        function createLandingParticles(x, y) {
+          for (let i = 0; i < 12; i++) {
+            const angle = Math.PI + (Math.random() - 0.5) * Math.PI * 0.9;
+            const spd = 0.05 + Math.random() * 0.18;
+            particles.push({
+              x: x,
+              y: y,
+              vx: Math.cos(angle) * spd,
+              vy: Math.sin(angle) * spd * 0.5 - 0.05,
+              life: 1.0,
+              decay: 0.0018 + Math.random() * 0.0015,
+              size: 2 + Math.random() * 3
+            });
+          }
+        }
+
+        function ensurePlatformsAhead() {
+          while (platforms.length <= currentPlatformIndex + 5) {
+            generatePlatform();
+          }
+        }
+
+        function generatePlatform() {
+          const minimumGap = 40;
+          const maximumGap = 190;
+          const minimumWidth = 25;
+          const maximumWidth = 85;
+          const lastPlatform = platforms[platforms.length - 1];
+          let furthestX = lastPlatform.x + lastPlatform.w;
+          const x = furthestX + minimumGap + Math.floor(Math.random() * (maximumGap - minimumGap + 1));
+          const w = minimumWidth + Math.floor(Math.random() * (maximumWidth - minimumWidth + 1));
+          platforms.push({ x, w });
+        }
+
+        // Steuerung
+        window.addEventListener("mousedown", handleStart);
+        window.addEventListener("touchstart", handleStart, {passive: false});
+        
+        window.addEventListener("mouseup", handleEnd);
+        window.addEventListener("touchend", handleEnd);
+
+        function handleStart(event) {
+          if (!isGameReady) return; 
+          if (Date.now() - lastRestartTime < 500) return; 
+          
+          if (event.type === 'touchstart') event.preventDefault();
+          
+          if (phase == "waiting") {
+            introductionElement.style.opacity = 0;
+            charge = 0;
+            fallRotation = 0;
+            phase = "charging";
+          }
+        }
+
+        function handleEnd(event) {
+          if (!isGameReady) return;
+          if (Date.now() - lastRestartTime < 500) return; 
+          
+          if (phase == "charging") {
+            // Sprung starten: Zähler erhöhen, fester Winkel 55°, v proportional zur Ladung
+            jumpCount++;
+            const speed = V_MIN + charge * (V_MAX - V_MIN);
+            vx = speed * Math.cos(JUMP_ANGLE_RAD);
+            vy = -speed * Math.sin(JUMP_ANGLE_RAD);
+            phase = "jumping";
+          }
+        }
+
+        window.addEventListener("resize", function (event) {
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+          draw();
+        });
+
+        window.requestAnimationFrame(animate);
+
+        function animate(timestamp) {
+          if (!lastTimestamp) {
+            lastTimestamp = timestamp;
+            window.requestAnimationFrame(animate);
+            return;
+          }
+
+          const dt = Math.min(timestamp - lastTimestamp, 100);
+          lastTimestamp = timestamp;
+
+          // Staubpartikel aktualisieren
+          for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.vy += GRAVITY * dt * 0.3;
+            p.life -= p.decay * dt;
+            if (p.life <= 0) {
+              particles.splice(i, 1);
+            }
+          }
+
+          switch (phase) {
+            case "waiting":
+              // Im Stand: Drache schlägt langsam mit Flügeln, Wolken ziehen vorbei
+              break;
+
+            case "charging": {
+              charge = Math.min(1, charge + dt / 1200);
+              break;
+            }
+
+            case "jumping": {
+              const prevY = heroY;
+              vy += GRAVITY * dt;
+              heroX += vx * dt;
+              heroY += vy * dt;
+
+              // Lande-Prüfung: Drache sinkt (vy > 0) und hat die Stegoberkante (heroY >= 0) erreicht/durchquert
+              if (vy > 0 && heroY >= 0) {
+                // Suche Plattform, auf der der Drache aufsetzt
+                const landedIndex = platforms.findIndex(
+                  (plat) => plat.x <= heroX && heroX <= plat.x + plat.w
+                );
+
+                if (landedIndex !== -1) {
+                  // Treffer auf Plattform!
+                  heroY = 0;
+                  vy = 0;
+                  vx = 0;
+                  createLandingParticles(heroX, canvasHeight - platformHeight);
+
+                  if (landedIndex > currentPlatformIndex) {
+                    // Weiter vorne gelandet: Punktevergabe
+                    currentPlatformIndex = landedIndex;
+                    const landedPlat = platforms[landedIndex];
+                    const perfectMin = landedPlat.x + landedPlat.w / 2 - perfectAreaSize / 2;
+                    const perfectMax = landedPlat.x + landedPlat.w / 2 + perfectAreaSize / 2;
+                    const isPerfect = (heroX >= perfectMin && heroX <= perfectMax);
+
+                    score += isPerfect ? 2 : 1;
+                    scoreElement.innerText = score;
+
+                    if (isPerfect) {
+                      perfectElement.style.opacity = 1;
+                      setTimeout(() => (perfectElement.style.opacity = 0), 1000);
+                    }
+
+                    if (score >= 20 && !cacheKnacked) {
+                      cacheKnacked = true;
+                      const secretBase64 = "TiA1MSAxMi4zNDUgRSAwMDkgNTYuNzg5";
+                      setTimeout(() => {
+                        document.getElementById('secret-coords').innerText = atob(secretBase64);
+                        document.getElementById('victory-popup').style.display = 'flex';
+                      }, 500);
+                    }
+
+                    ensurePlatformsAhead();
+                    phase = "transitioning";
+                  } else {
+                    // Auf eigenem Steg gelandet (zu kurz gesprungen) -> 0 Punkte, zurück zu waiting
+                    phase = "waiting";
+                  }
+                } else if (prevY <= 0) {
+                  // War vorher oben und hat Kante durchquert, aber kein Steg darunter -> Absturz
+                  phase = "falling";
+                }
+              }
+              break;
+            }
+
+            case "transitioning": {
+              sceneOffset += dt * transitioningSpeed;
+              const targetPlat = platforms[currentPlatformIndex];
+              const targetOffset = targetPlat.x - 50;
+
+              if (sceneOffset >= targetOffset) {
+                sceneOffset = targetOffset;
+                phase = "waiting";
+              }
+              break;
+            }
+
+            case "falling": {
+              vy += GRAVITY * dt * 0.8;
+              heroX += vx * dt * 0.3; // Behält leichte Vorwärtsdrift
+              heroY += vy * dt;
+              fallRotation += dt * 0.0035; // Drache dreht sich beim Fallen
+              
+              const maxFallY = platformHeight + 150 + (window.innerHeight - canvasHeight) / 2;
+              if (heroY > maxFallY) {
+                restartButton.style.display = "block";
+              }
+              break;
+            }
+
+            default:
+              throw Error("Wrong phase: " + phase);
+          }
+
+          draw();
+          window.requestAnimationFrame(animate);
+        }
+
+
+
+
+
+        function prepareWatermark() {
+          if (!watermarkImg.complete || watermarkImg.naturalWidth === 0) return;
+          if (watermarkCanvas) return;
+
+          const offscreen = document.createElement("canvas");
+          offscreen.width = watermarkImg.naturalWidth;
+          offscreen.height = watermarkImg.naturalHeight;
+          const offCtx = offscreen.getContext("2d");
+          offCtx.drawImage(watermarkImg, 0, 0);
+
+          try {
+            const imgData = offCtx.getImageData(0, 0, offscreen.width, offscreen.height);
+            const data = imgData.data;
+            for (let i = 0; i < data.length; i += 4) {
+              const r = data[i];
+              const g = data[i + 1];
+              const b = data[i + 2];
+              // Heller Bildhintergrund wird 100% transparent, dunkle Linien bleiben erhalten
+              const brightness = (r + g + b) / 3;
+              const darkness = Math.max(0, Math.min(1, (240 - brightness) / 180));
+              
+              data[i] = 255;
+              data[i + 1] = 230;
+              data[i + 2] = 205;
+              data[i + 3] = Math.round(darkness * 255);
+            }
+            offCtx.putImageData(imgData, 0, 0);
+            watermarkCanvas = offscreen;
+          } catch (e) {
+            // Fallback auf Originalbild bei restriktiven Sandboxen
+            watermarkCanvas = watermarkImg;
+          }
+        }
+
+        watermarkImg.onload = prepareWatermark;
+
+        function drawWatermark() {
+          if (!watermarkCanvas) {
+            prepareWatermark();
+            if (!watermarkCanvas) return;
+          }
+
+          const source = watermarkCanvas;
+          const srcW = source.width || source.naturalWidth;
+          const srcH = source.height || source.naturalHeight;
+          if (!srcW || !srcH) return;
+
+          const w = window.innerWidth;
+          const h = window.innerHeight;
+
+          const maxW = w * 0.7;
+          const maxH = h * 0.55;
+          const imgRatio = srcW / srcH;
+
+          let drawW = maxW;
+          let drawH = drawW / imgRatio;
+          if (drawH > maxH) {
+            drawH = maxH;
+            drawW = drawH * imgRatio;
+          }
+
+          const x = (w - drawW) / 2;
+          const y = (h - drawH) / 2 - 20;
+
+          ctx.save();
+          // Sehr feine, dezente Deckkraft im Abendhimmel
+          ctx.globalAlpha = (source === watermarkImg) ? 0.02 : 0.08;
+          ctx.drawImage(source, x, y, drawW, drawH);
+          ctx.restore();
+        }
+
+        function draw() {
+          ctx.save();
+          ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+          drawBackground();
+          drawWatermark();
+
+          ctx.translate(
+            (window.innerWidth - canvasWidth) / 2 - sceneOffset,
+            (window.innerHeight - canvasHeight) / 2
+          );
+
+          drawPlatforms();
+
+          if (phase === "charging") {
+            drawTrajectoryPreview();
+          }
+
+          drawParticles();
+          drawDragon();
+
+          if (phase === "charging") {
+            drawChargeRing();
+          }
+
+          ctx.restore();
+        }
+
+        function drawParticles() {
+          particles.forEach((p) => {
+            ctx.save();
+            ctx.fillStyle = `rgba(230, 200, 160, ${p.life * 0.7})`;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          });
+        }
+
+        function drawTrajectoryPreview() {
+          // Flugbahn-Vorschau: Sprung 1-4 = Deckkraft 1, linear verblassend bis Sprung 10 auf 0, danach weg
+          let previewAlpha = 0;
+          if (jumpCount < 4) {
+            previewAlpha = 1;
+          } else if (jumpCount < 10) {
+            previewAlpha = 1 - (jumpCount - 3) / 7;
+          } else {
+            return; // Ab Sprung 10 nicht mehr zeichnen
+          }
+
+          if (previewAlpha <= 0.02 || charge <= 0.02) return;
+
+          const startX = heroX;
+          const startY = canvasHeight - platformHeight;
+          const speed = V_MIN + charge * (V_MAX - V_MIN);
+          const simVx = speed * Math.cos(JUMP_ANGLE_RAD);
+          const simVy0 = -speed * Math.sin(JUMP_ANGLE_RAD);
+
+          ctx.save();
+          const numDots = 24;
+          const totalFlightTime = (2 * (-simVy0)) / GRAVITY;
+          const timeStep = totalFlightTime / (numDots - 1);
+
+          for (let i = 1; i < numDots; i++) {
+            const t = i * timeStep;
+            const px = startX + simVx * t;
+            const py = startY + simVy0 * t + 0.5 * GRAVITY * t * t;
+
+            ctx.fillStyle = `rgba(255, 230, 150, ${previewAlpha * 0.85})`;
+            ctx.beginPath();
+            ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+
+        restartButton.addEventListener("click", function (event) {
+          event.preventDefault();
+          event.stopPropagation(); 
+          resetGame();
+        });
+        
+        restartButton.addEventListener("touchstart", function (event) {
+          event.preventDefault();
+          event.stopPropagation(); 
+          resetGame();
+        });
+
+        function drawPlatforms() {
+          const platTop = canvasHeight - platformHeight;
+          const platBottom = platTop + platformHeight + (window.innerHeight - canvasHeight) / 2;
+          const platTotalH = Math.max(platformHeight, platBottom - platTop);
+
+          platforms.forEach(({ x, w }, idx) => {
+            // Felssäule Grundkörper mit dunklem Fels-Gradient
+            const rockGrad = ctx.createLinearGradient(x, platTop, x + w, platTop);
+            rockGrad.addColorStop(0, "#22252a");
+            rockGrad.addColorStop(0.2, "#343a40");
+            rockGrad.addColorStop(0.8, "#282c34");
+            rockGrad.addColorStop(1, "#1a1c20");
+            ctx.fillStyle = rockGrad;
+            ctx.fillRect(x, platTop, w, platTotalH);
+
+            // Kanten-Highlights & Fels-Textur
+            ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
+            ctx.fillRect(x, platTop, w, 3); // Helle Kante oben
+            ctx.fillRect(x, platTop, 2, platTotalH); // Highlight links
+
+            ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+            ctx.fillRect(x + w - 3, platTop, 3, platTotalH); // Schatten rechts
+
+            // Feine vertikale Felsrisse/Schattierungen
+            if (w > 30) {
+              ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+              ctx.fillRect(x + Math.floor(w * 0.35), platTop + 3, 2, platTotalH);
+              ctx.fillRect(x + Math.floor(w * 0.7), platTop + 10, 1.5, platTotalH);
+            }
+
+            // Lava-Glühen von unten
+            const lavaGrad = ctx.createLinearGradient(x, platTop + platTotalH - 80, x, platTop + platTotalH);
+            lavaGrad.addColorStop(0, "rgba(255, 69, 0, 0)");
+            lavaGrad.addColorStop(0.5, "rgba(255, 100, 0, 0.25)");
+            lavaGrad.addColorStop(1, "rgba(255, 140, 0, 0.7)");
+            ctx.fillStyle = lavaGrad;
+            ctx.fillRect(x, platTop, w, platTotalH);
+
+            // Rote Perfekt-Zone in der Stegmitte für alle kommenden Stege
+            if (idx > currentPlatformIndex) {
+              ctx.fillStyle = "#e74c3c";
+              ctx.fillRect(
+                x + w / 2 - perfectAreaSize / 2,
+                platTop,
+                perfectAreaSize,
+                4
+              );
+            }
+          });
+        }
+
+        function drawDragon() {
+          ctx.save();
+          // Fuß-Position auf der Stegoberkante (canvasHeight - platformHeight) + heroY
+          const footY = canvasHeight - platformHeight + heroY;
+          ctx.translate(heroX, footY);
+
+          // Absturz: Drache dreht sich beim Fallen um seinen Schwerpunkt
+          if (phase === "falling" && fallRotation !== 0) {
+            ctx.translate(0, -12);
+            ctx.rotate(fallRotation);
+            ctx.translate(0, 12);
+          }
+
+          // Drache duckt sich beim Laden leicht (Y-Skalierung bis 0.85 von den Füßen aus)
+          if (phase === "charging") {
+            const squish = 1 - 0.15 * charge;
+            ctx.scale(1 + 0.05 * charge, squish);
+          }
+
+          // Flügelschlag-Frequenz: in der Luft / beim Sprung schnell, im Stand langsam
+          const isInAir = (phase === "jumping" || phase === "falling");
+          const wingFreq = isInAir ? 0.025 : 0.007;
+          const wingAngle = Math.sin(Date.now() * wingFreq) * 0.55;
+
+          // 1. Schwanz (hinten links)
+          ctx.strokeStyle = "#1b8a3e";
+          ctx.lineWidth = 4;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(-10, -10);
+          ctx.quadraticCurveTo(-20, -12, -22, -18);
+          ctx.stroke();
+
+          // Schwanzspitze (kleiner Zacken/Pfeil)
+          ctx.fillStyle = "#f39c12";
+          ctx.beginPath();
+          ctx.moveTo(-22, -18);
+          ctx.lineTo(-26, -20);
+          ctx.lineTo(-24, -15);
+          ctx.closePath();
+          ctx.fill();
+
+          // 2. Hinterer Flügel
+          ctx.save();
+          ctx.translate(-2, -18);
+          ctx.rotate(-wingAngle * 0.8 - 0.2);
+          ctx.fillStyle = "#1e824c";
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(-10, -18);
+          ctx.lineTo(2, -12);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+
+          // 3. Füße (stehen genau auf y = 0, Stegoberkante)
+          ctx.fillStyle = "#145a32";
+          // Hinterer Fuß
+          ctx.beginPath();
+          ctx.ellipse(-6, -2, 4, 3, 0, 0, Math.PI * 2);
+          ctx.fill();
+          // Vorderer Fuß
+          ctx.beginPath();
+          ctx.ellipse(6, -2, 4, 3, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 4. Drachenkörper (grün, oval)
+          ctx.fillStyle = "#27ae60";
+          ctx.beginPath();
+          ctx.ellipse(0, -12, 13, 10, 0.05, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Heller Bauch (hellgrün / gelblich)
+          ctx.fillStyle = "#a9dfbf";
+          ctx.beginPath();
+          ctx.ellipse(2, -10, 8, 7, 0.1, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 5. Kopf (rechts oben)
+          ctx.fillStyle = "#2ecc71";
+          ctx.beginPath();
+          ctx.ellipse(11, -22, 9, 8, 0.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Schnauze
+          ctx.beginPath();
+          ctx.ellipse(17, -20, 5, 4, 0.1, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Hörner (orange/goldene Spitzen)
+          ctx.fillStyle = "#e67e22";
+          ctx.beginPath();
+          ctx.moveTo(8, -28);
+          ctx.lineTo(10, -35);
+          ctx.lineTo(13, -28);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.moveTo(4, -26);
+          ctx.lineTo(4, -33);
+          ctx.lineTo(8, -26);
+          ctx.closePath();
+          ctx.fill();
+
+          // Auge (weiß mit schwarzer Pupille)
+          ctx.fillStyle = "#ffffff";
+          ctx.beginPath();
+          ctx.arc(13, -24, 3.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = "#111111";
+          ctx.beginPath();
+          ctx.arc(14.5, -24, 1.6, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 6. Vorderer Flügel (über Körper gelegt, animiert)
+          ctx.save();
+          ctx.translate(1, -15);
+          ctx.rotate(wingAngle);
+          ctx.fillStyle = "#2ecc71";
+          ctx.strokeStyle = "#1e824c";
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(-12, -22);
+          ctx.lineTo(-1, -16);
+          ctx.lineTo(6, -20);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.restore();
+        }
+
+        function drawChargeRing() {
+          ctx.save();
+          const headX = heroX + 11;
+          const headY = canvasHeight - platformHeight + heroY - 55;
+          const r = 18;
+
+          // Glühen bei 100 % (charge >= 0.99)
+          if (charge >= 0.99) {
+            ctx.shadowColor = "#ff3838";
+            ctx.shadowBlur = 12;
+          }
+
+          // 1. Grauer Hintergrund-Kreis & Ring
+          ctx.fillStyle = "rgba(20, 20, 25, 0.7)";
+          ctx.beginPath();
+          ctx.arc(headX, headY, r, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+          ctx.lineWidth = 3.5;
+          ctx.beginPath();
+          ctx.arc(headX, headY, r, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // 2. Lade-Bogen im Uhrzeigersinn ab 12 Uhr (-PI / 2)
+          if (charge > 0.01) {
+            const startAngle = -Math.PI / 2;
+            const endAngle = startAngle + charge * Math.PI * 2;
+            const hue = (1 - charge) * 120; // Grün (120) -> Gelb (60) -> Orange (30) -> Rot (0)
+            ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
+            ctx.lineWidth = 4;
+            ctx.lineCap = "round";
+            ctx.beginPath();
+            ctx.arc(headX, headY, r, startAngle, endAngle, false);
+            ctx.stroke();
+          }
+
+          // 3. Prozentzahl in der Mitte
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "bold 10px 'Segoe UI', sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          const percentText = Math.floor(charge * 100) + "%";
+          ctx.fillText(percentText, headX, headY);
+
+          ctx.restore();
+        }
+
+
+
+        function drawBackground() {
+          const w = window.innerWidth;
+          const h = window.innerHeight;
+
+          // 1. Himmel: Verlauf Violett (#2d1b4e) -> Orange (#ff8c42)
+          const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.75);
+          skyGrad.addColorStop(0, "#2d1b4e");
+          skyGrad.addColorStop(0.5, "#5d275d");
+          skyGrad.addColorStop(0.85, "#d35400");
+          skyGrad.addColorStop(1, "#ff8c42");
+          ctx.fillStyle = skyGrad;
+          ctx.fillRect(0, 0, w, h);
+
+          // 2. Kleine untergehende Sonne am Horizont
+          const sunX = w * 0.72;
+          const sunY = h * 0.58;
+          const sunRadius = 28;
+          const sunGlow = ctx.createRadialGradient(sunX, sunY, sunRadius * 0.3, sunX, sunY, sunRadius * 2.5);
+          sunGlow.addColorStop(0, "rgba(255, 235, 170, 0.95)");
+          sunGlow.addColorStop(0.4, "rgba(255, 160, 60, 0.5)");
+          sunGlow.addColorStop(1, "rgba(255, 140, 66, 0)");
+          ctx.fillStyle = sunGlow;
+          ctx.beginPath();
+          ctx.arc(sunX, sunY, sunRadius * 2.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = "#fff4d0";
+          ctx.beginPath();
+          ctx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 3. Langsam ziehende Wolken
+          const now = Date.now() / 1000;
+          clouds.forEach((c) => {
+            const cloudX = ((c.x + now * c.speed - sceneOffset * 0.05) % (w + 200) + (w + 200)) % (w + 200) - 100;
+            drawCloud(cloudX, c.y, c.w);
+          });
+
+          // 4. Parallax-Bergkette 1 (Ferne / heller / violetter Dunst, Scrollfaktor 0.08)
+          drawMountains(0.08, h * 0.48, 90, "#4a244d", 420);
+
+          // 5. Parallax-Bergkette 2 (Vordergrund / dunkler Fels, Scrollfaktor 0.22)
+          drawMountains(0.22, h * 0.58, 120, "#1f122b", 300);
+        }
+
+        function drawCloud(cx, cy, cw) {
+          ctx.save();
+          ctx.fillStyle = "rgba(255, 200, 180, 0.28)";
+          ctx.beginPath();
+          ctx.arc(cx, cy, cw * 0.2, 0, Math.PI * 2);
+          ctx.arc(cx + cw * 0.25, cy - cw * 0.08, cw * 0.26, 0, Math.PI * 2);
+          ctx.arc(cx + cw * 0.55, cy, cw * 0.22, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        function drawMountains(parallaxFactor, baseY, peakHeight, color, peakSpan) {
+          ctx.save();
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          const w = window.innerWidth;
+          const h = window.innerHeight;
+          const offset = sceneOffset * parallaxFactor;
+
+          ctx.moveTo(0, h);
+          ctx.lineTo(0, baseY);
+
+          const step = 20;
+          for (let x = 0; x <= w + step; x += step) {
+            const worldX = x + offset;
+            // Synthetische gezackte Bergsilhouette aus zwei Sinuswellen
+            const y = baseY - Math.abs(Math.sin(worldX / peakSpan * Math.PI)) * peakHeight
+                            - Math.sin((worldX * 2.3) / peakSpan) * (peakHeight * 0.25);
+            ctx.lineTo(x, y);
+          }
+          ctx.lineTo(w, h);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+    </script>
+</body>
+</html>
