@@ -180,7 +180,7 @@
       <canvas id="game"></canvas>
       <div id="introduction">
           Halte gedrückt, um Sprungkraft zu laden. Loslassen = Sprung.<br><br>
-          <span style="color: #e74c3c; font-weight: bold;">ZIEL: 20 PUNKTE</span>
+          <span style="color: #e74c3c; font-weight: bold;">ZIEL: 23 PUNKTE</span>
       </div>
       <div id="perfect">PERFEKT! +2</div>
       <button id="restart">NEUSTART</button>
@@ -504,7 +504,7 @@
                       setTimeout(() => (perfectElement.style.opacity = 0), 1000);
                     }
 
-                    if (score >= 20 && !cacheKnacked) {
+                    if (score >= 23 && !cacheKnacked) {
                       cacheKnacked = true;
                       const secretBase64 = "TiA1MCAxNy43NTEgRSAwMTEgNTkuNzA2";
                       setTimeout(() => {
